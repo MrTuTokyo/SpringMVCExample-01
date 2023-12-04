@@ -15,58 +15,44 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.server.ResponseStatusException;
-import org.springframework.web.servlet.view.RedirectView;
 
 import com.example.servingwebcontent.entity.CountryEntity;
-import com.example.servingwebcontent.entity.Customer;
 import com.example.servingwebcontent.form.CountryForm;
 import com.example.servingwebcontent.form.CountrySearchForm;
-import com.example.servingwebcontent.form.TestForm;
 import com.example.servingwebcontent.repository.CountryEntityMapper;
+import com.example.servingwebcontent.utils.CommonResult;
 import com.google.gson.Gson;
+
+
 
 @Controller
 public class CountryController {
 
 	@Autowired
 	private CountryEntityMapper mapper;
-
+	
+	@Autowired
+	private CommonResult result;
+	
+	@Autowired
+	private Gson gson;
+	
 	/**
 	 * The String class represents character strings.
 	 */
 	@GetMapping("/list")
-	public String list(TestForm testForm) {
-		// String names = "countrys";
-		// List<CountryEntity> list = mapper.select(SelectDSLCompleter.allRows());
-		// model.addAttribute(names, list);
-		// model.addAttribute("testForm", new TestForm());
+	public String list(Model model) {
+		String names = "Country";
+		List<CountryEntity> list = mapper.select(SelectDSLCompleter.allRows());
+	
+		model.addAttribute(names, list);
 		return "list";
 	}
-
-	@PostMapping("/create")
-	@ResponseBody
-	public String createTestCountry(TestForm testForm){
-
-		// create new entity
-		CountryEntity entity = new CountryEntity();
-		// set country cd
-		entity.setMstcountrycd(testForm.getCd());
-		// set country name
-		entity.setMstcountrynanme(testForm.getName());
-		// insert record
-		mapper.insert(entity);
-
-		// clear form attrib
-		testForm.setCd("");
-		testForm.setName("");
-
-		return "这是自己写的回给前端的信息";
-	}
-
-
+	
 	@GetMapping("/country")
-	public String init(CountrySearchForm countrySearchForm) {
-
+	public String init(Model model) {
+		model.addAttribute("searchForm", new CountrySearchForm());
+		model.addAttribute("countryForm", new CountryForm());
 		return "country/country";
 	}
 
@@ -93,42 +79,65 @@ public class CountryController {
 		return new Gson().toJson(countryEntity.get());
 	}
 
-
-	/**
-	 * Returns the name of the view template to render for creating a country.
-	 *
-	 * @param countryForm the form object containing the country data
-	 * @return the name of the view template for adding a country
-	 */
-	@GetMapping("/country/create")
+	@PostMapping("/country/creat")
+	@ResponseBody
 	public String create(CountryForm countryForm) {
-		return "addCountry";
+		CountryEntity entity = new CountryEntity();
+		
+		entity.setMstcountrycd(countryForm.getCd());
+		entity.setMstcountrynanme(countryForm.getName());
+		
+		mapper.insert(entity);
+		
+		result.setStatus(0);
+		result.setMessage("regist successed");
+		
+		return gson.toJson(result);
 	}
-
-	/**
-	 * Creates a new country in the database based on the provided country form.
-	 * 
-	 * @param countryForm the country form containing the details of the country to be created
-	 * @return a string message to be sent back to the frontend
+	
+	
+	@PostMapping("/country/update")
+	@ResponseBody
+	public String update(CountryForm countryForm) {
+		
+		CountryEntity countryEntity = new CountryEntity();
+		
+		countryEntity.setMstcountrycd(countryForm.getCd());
+		countryEntity.setMstcountrynanme(countryForm.getName());
+		
+		mapper.updateByPrimaryKey(countryEntity);
+		
+		result.setStatus(0);
+		result.setMessage("uodate successed");
+		
+		return gson.toJson(result);
+	}
+	
+	@PostMapping("/country/delete")
+	@ResponseBody
+	public String delete(CountryForm countryForm) {
+		
+		mapper.deleteByPrimaryKey(countryForm.getCd());
+		
+		result.setStatus(0);
+		result.setMessage("delete successed");		
+		
+		return gson.toJson(result);
+	
+	}
+	
+	
+	/*
+	 * 创建一个方法，监听/country/createCountry，
+	 * 实现根据请求的参数创建一个CountryEntity对象，并将其插入到数据库中。
 	 */
 	@PostMapping("/country/createCountry")
 	@ResponseBody
-	public String createCountry(CountryForm countryForm){
-
-		// create new entiry
-		CountryEntity countryEntity = new CountryEntity();
-		countryEntity.setMstcountrycd(countryForm.getCd());
-		countryEntity.setMstcountrynanme(countryForm.getName());
-
-		// insert into database
-		mapper.insert(countryEntity);
-
-		countryForm.setCd("");
-		countryForm.setName("");
-
-		return "这是自己写的回给前端的信息";
+	public String createCountry(@RequestBody CountryEntity countryEntity) {
+		// Method body goes here
+		// For example, you might save the countryEntity to the database
+		// Then return a success message or the saved entity
+		return "Country created successfully";
 	}
-	
-
 
 }
